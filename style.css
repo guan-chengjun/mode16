@@ -1,0 +1,338 @@
+/* ============================================================
+   卡丁车 3D 教学演示 —— 深色主题样式表
+   布局：左侧悬浮控制面板 + 右侧零件讲解面板 + 全屏画布
+   ============================================================ */
+
+:root {
+  /* 深色配色变量 */
+  --bg: #0d1117;
+  --panel-bg: rgba(17, 24, 34, 0.92);
+  --panel-border: rgba(120, 160, 220, 0.18);
+  --text: #e6edf3;
+  --text-dim: #8b98a8;
+  --accent: #3b82f6;      /* 主色：蓝 */
+  --accent-hover: #2563eb;
+  --accent-soft: rgba(59, 130, 246, 0.16);
+  --danger: #ef4444;
+  --radius: 10px;
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+  font-size: 14px;
+  /* 禁止移动端长按选择文字，避免触控操作时弹出系统菜单 */
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* 3D 画布容器占满全屏 */
+#app {
+  position: fixed;
+  inset: 0;
+}
+#app canvas {
+  display: block;
+  touch-action: none; /* 关键：把触摸事件交给 OrbitControls */
+}
+
+/* ---------------- 通用面板外观 ---------------- */
+.panel {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  width: 300px;
+  max-height: calc(100vh - 32px);
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: transform 0.28s ease, opacity 0.28s ease;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--panel-border);
+  background: rgba(255, 255, 255, 0.03);
+}
+.panel-header h1 {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+.panel-header h2 {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.panel-body {
+  padding: 12px 14px 16px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+.panel-body::-webkit-scrollbar { width: 6px; }
+.panel-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 3px;
+}
+
+/* ---------------- 分组与按钮 ---------------- */
+.group {
+  margin-bottom: 16px;
+}
+.group h2 {
+  font-size: 12px;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px dashed var(--panel-border);
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.row.column {
+  flex-direction: column;
+  gap: 6px;
+}
+
+.btn {
+  flex: 1;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.05s;
+  font-family: inherit;
+}
+.btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: var(--accent);
+}
+.btn:active { transform: scale(0.97); }
+.btn.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.btn.btn-primary:hover { background: var(--accent-hover); }
+/* 运转中状态：红色停止按钮 */
+.btn.btn-stop {
+  background: var(--danger);
+  border-color: var(--danger);
+}
+/* 显示模式三按钮组：当前激活态 */
+.mode-btn.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: #93c5fd;
+}
+
+.icon-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 14px;
+}
+.icon-btn:hover { background: rgba(255, 255, 255, 0.18); }
+
+.text-input {
+  width: 100%;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 12px;
+  outline: none;
+}
+.text-input:focus { border-color: var(--accent); }
+
+.hint {
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--text-dim);
+}
+
+/* ---------------- 速度滑块 ---------------- */
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+label[for="speed-slider"] {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+#speed-value { color: var(--text); }
+
+/* ---------------- 转速表区域 ---------------- */
+.rpm-box {
+  margin-top: 6px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  text-align: center;
+}
+#rpm-canvas { width: 100%; height: auto; }
+.telemetry {
+  display: flex;
+  justify-content: space-around;
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+.telemetry b { color: #93c5fd; font-size: 14px; }
+
+/* ---------------- 零件讲解面板 ---------------- */
+.info-panel {
+  left: auto;
+  right: 16px;
+  width: 320px;
+}
+.info-panel.hidden {
+  transform: translateX(calc(100% + 32px));
+  opacity: 0;
+  pointer-events: none;
+}
+.info-block { margin-bottom: 14px; }
+.info-block h3 {
+  font-size: 12px;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+.info-block p {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--text);
+}
+.keywords {
+  color: var(--text-dim) !important;
+  font-size: 12px !important;
+}
+
+/* 控制面板折叠态（移动端） */
+#control-panel.collapsed .panel-body { display: none; }
+#control-panel.collapsed { max-height: 52px; }
+#control-panel.collapsed #panel-toggle { transform: rotate(180deg); }
+#panel-toggle { transition: transform 0.25s; }
+
+.hidden { display: none !important; }
+
+/* ---------------- 加载遮罩 ---------------- */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 8, 12, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+.loading-card {
+  width: 280px;
+  padding: 24px;
+  text-align: center;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+}
+.spinner {
+  width: 36px;
+  height: 36px;
+  margin: 0 auto 14px;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.progress-bar {
+  margin-top: 12px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+#progress-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  transition: width 0.2s;
+}
+
+/* ---------------- Toast 提示 ---------------- */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 20px;
+  background: rgba(30, 41, 59, 0.95);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  font-size: 13px;
+  z-index: 60;
+  box-shadow: var(--shadow);
+  animation: toast-in 0.25s ease;
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translate(-50%, 12px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* ---------------- 响应式：移动端适配 ---------------- */
+@media (max-width: 768px) {
+  .panel {
+    width: calc(100vw - 24px);
+    left: 12px;
+    top: 12px;
+    max-height: 52vh;
+  }
+  /* 讲解面板在手机上贴底显示，避免与控制面板重叠 */
+  .info-panel {
+    right: 12px;
+    left: 12px;
+    width: auto;
+    top: auto;
+    bottom: 12px;
+    max-height: 46vh;
+  }
+  .info-panel.hidden {
+    transform: translateY(calc(100% + 24px));
+  }
+  .btn { padding: 10px 8px; }
+}

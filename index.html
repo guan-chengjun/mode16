@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <!-- 移动端视口适配：禁止双击缩放，保证触控交互正常 -->
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>卡丁车 3D 结构教学演示</title>
+  <link rel="stylesheet" href="./style.css" />
+
+  <!--
+    通过 importmap 以 CDN 方式引入 Three.js（ES Module 版本）。
+    国内网络若 jsDelivr 访问慢，可把两处 cdn.jsdelivr.net 替换为 unpkg.com。
+  -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <!-- 3D 渲染画布挂载点 -->
+  <div id="app"></div>
+
+  <!-- ============ 左侧悬浮控制面板 ============ -->
+  <aside id="control-panel" class="panel">
+    <div class="panel-header">
+      <h1>卡丁车 3D 教学台</h1>
+      <!-- 移动端折叠/展开按钮 -->
+      <button id="panel-toggle" class="icon-btn" title="折叠面板">▾</button>
+    </div>
+
+    <div class="panel-body">
+      <!-- 模型加载分组 -->
+      <section class="group">
+        <h2>模型加载</h2>
+        <div class="row">
+          <input id="glb-url" type="text" class="text-input"
+                 placeholder="输入 GLB 模型 URL（留空用内置模型）" />
+        </div>
+        <div class="row">
+          <button id="btn-load-glb" class="btn btn-primary">加载 GLB</button>
+          <button id="btn-use-builtin" class="btn">恢复内置模型</button>
+        </div>
+        <p class="hint">支持跨域 URL，服务器需允许 CORS。</p>
+      </section>
+
+      <!-- 视角分组 -->
+      <section class="group">
+        <h2>视角控制</h2>
+        <div class="row">
+          <button id="btn-reset-view" class="btn">视角重置</button>
+        </div>
+        <p class="hint">左键拖拽旋转 · 滚轮缩放 · 右键平移（移动端单指旋转 / 双指缩放平移）</p>
+      </section>
+
+      <!-- 显示模式分组 -->
+      <section class="group">
+        <h2>显示模式</h2>
+        <div class="row btn-group" id="display-mode-group">
+          <button class="btn mode-btn active" data-mode="solid">实体着色</button>
+          <button class="btn mode-btn" data-mode="wireframe">透视线框</button>
+          <button class="btn mode-btn" data-mode="xray">半透明透视</button>
+        </div>
+      </section>
+
+      <!-- 运转动画分组 -->
+      <section class="group">
+        <h2>运转仿真</h2>
+        <div class="row">
+          <button id="btn-run-toggle" class="btn btn-primary">▶ 启动运转</button>
+        </div>
+        <div class="row column">
+          <label for="speed-slider">动画速度：<span id="speed-value">1.0×</span></label>
+          <input id="speed-slider" type="range" min="0.1" max="3" step="0.1" value="1" />
+        </div>
+        <!-- 转速表（Canvas 绘制） -->
+        <div class="rpm-box">
+          <canvas id="rpm-canvas" width="180" height="120"></canvas>
+          <div class="telemetry">
+            <span>车速 <b id="telemetry-speed">0</b> km/h</span>
+            <span>挡位 <b id="telemetry-gear">N</b></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 选中部件分组 -->
+      <section class="group">
+        <h2>部件讲解</h2>
+        <div class="row">
+          <button id="btn-clear-select" class="btn">重置选中部件</button>
+        </div>
+        <p class="hint">点击场景中的卡丁车零件查看结构讲解。</p>
+      </section>
+    </div>
+  </aside>
+
+  <!-- ============ 右侧零件讲解面板 ============ -->
+  <aside id="info-panel" class="panel info-panel hidden">
+    <div class="panel-header">
+      <h2 id="info-title">零件名称</h2>
+      <button id="info-close" class="icon-btn" title="关闭">✕</button>
+    </div>
+    <div class="panel-body">
+      <section class="info-block">
+        <h3>功能介绍</h3>
+        <p id="info-function"></p>
+      </section>
+      <section class="info-block">
+        <h3>作用原理</h3>
+        <p id="info-principle"></p>
+      </section>
+      <section class="info-block" id="info-keyword-block">
+        <h3>识别关键词</h3>
+        <p id="info-keywords" class="keywords"></p>
+      </section>
+    </div>
+  </aside>
+
+  <!-- ============ 加载进度遮罩 ============ -->
+  <div id="loading-overlay" class="loading-overlay hidden">
+    <div class="loading-card">
+      <div class="spinner"></div>
+      <p id="loading-text">正在加载模型…</p>
+      <div class="progress-bar"><div id="progress-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- 状态提示 Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- 主程序（ES Module，必须以模块方式运行，不能用 file:// 直接打开） -->
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
